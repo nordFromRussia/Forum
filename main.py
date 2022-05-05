@@ -254,7 +254,7 @@ def add_film():
         db_sess.commit()
         print(2)
         return redirect('/film')
-    print(2)
+
     db_sess = db_session.create_session()
 
     if current_user.is_authenticated:
@@ -264,7 +264,7 @@ def add_film():
     else:
         news = db_sess.query(Film).filter(Film.is_private != True)
     print(3)
-    return render_template('film.html',
+    return render_template('news.html',
                            form=form,
                            news=news)
 
