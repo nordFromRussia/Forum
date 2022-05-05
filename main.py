@@ -238,6 +238,7 @@ def news_delete(id):
     return redirect('/')
 
 
+@app.route('/films', methods=['GET', 'POST'])
 def add_film():
     form = NewsForm()
 
@@ -245,12 +246,15 @@ def add_film():
         db_sess = db_session.create_session()
         news = Film()
         news.content = form.content.data
+        print(1)
         news.is_private = form.is_private.data
-        current_user.news.append(news)
+        current_user.films.append(news)
+        print(2)
         db_sess.merge(current_user)
         db_sess.commit()
-        return redirect('/')
-
+        print(2)
+        return redirect('/film')
+    print(2)
     db_sess = db_session.create_session()
 
     if current_user.is_authenticated:
@@ -259,13 +263,13 @@ def add_film():
 
     else:
         news = db_sess.query(Film).filter(Film.is_private != True)
-
-    return render_template('news.html',
+    print(3)
+    return render_template('film.html',
                            form=form,
                            news=news)
 
 
-@app.route('/film/<int:id>', methods=['GET', 'POST'])
+@app.route('/films/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_film(id):
     form = NewsForm()
@@ -293,7 +297,7 @@ def edit_film(id):
             news.content = form.content.data
             news.is_private = form.is_private.data
             db_sess.commit()
-            return redirect('/')
+            return redirect('/film')
 
         else:
             abort(404)
@@ -319,7 +323,7 @@ def film_delete(id):
 
     else:
         abort(404)
-    return redirect('/')
+    return redirect('/film')
 
 
 
