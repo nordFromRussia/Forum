@@ -1,3 +1,5 @@
+import random
+
 from flask import Flask, render_template, abort, request
 from werkzeug.utils import redirect
 
@@ -12,6 +14,7 @@ from data.book import Book
 from data.games import Game
 from data.humor import Humo
 from data.film import Film
+import requests
 
 
 app = Flask(__name__)
@@ -58,6 +61,7 @@ def humor():
     return render_template("humor.html",
                            news=news)
 
+
 @app.route("/game")
 def game():
     db_sess = db_session.create_session()
@@ -70,6 +74,7 @@ def game():
     return render_template("games.html",
                            news=news)
 
+
 @app.route("/book")
 def book():
     db_sess = db_session.create_session()
@@ -81,6 +86,7 @@ def book():
         news = db_sess.query(Book).filter(Book.is_private != True)
     return render_template("book.html",
                            news=news)
+
 
 @app.route("/film")
 def films():
@@ -326,7 +332,193 @@ def film_delete(id):
     return redirect('/film')
 
 
+@app.route('/books', methods=['GET', 'POST'])
+def add_book():
+    form = NewsForm()
 
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        news = Book()
+        news.content = form.content.data
+        print(1)
+        news.is_private = form.is_private.data
+
+        print(8)
+        current_user.books.append(news)
+        db_sess.merge(current_user)
+        db_sess.commit()
+        print(2)
+        return redirect('/book')
+
+    db_sess = db_session.create_session()
+
+    if current_user.is_authenticated:
+        news = db_sess.query(Book).filter(
+            (Book.user == current_user) | (Book.is_private != True))
+
+    else:
+        news = db_sess.query(Book).filter(Book.is_private != True)
+    print(3)
+    return render_template('news.html',
+                           form=form,
+                           news=news)
+
+
+@app.route('/book/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_book(id):
+    form = NewsForm()
+
+    if request.method == "GET":
+        db_sess = db_session.create_session()
+        news = db_sess.query(Book).filter(Book.id == id,
+                                          Book.user == current_user
+                                          ).first()
+
+        if news:
+            form.content.data = news.content
+            form.is_private.data = news.is_private
+
+        else:
+            abort(404)
+
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        news = db_sess.query(Book).filter(Book.id == id,
+                                          Book.user == current_user
+                                          ).first()
+
+        if news:
+            news.content = form.content.data
+            news.is_private = form.is_private.data
+            db_sess.commit()
+            return redirect('/book')
+
+        else:
+            abort(404)
+
+    return render_template('news.html',
+                           title='Редактирование новости',
+                           form=form
+                           )
+
+
+@app.route('/book_delete/<int:id>', methods=['GET', 'POST'])
+@login_required
+def book_delete(id):
+    db_sess = db_session.create_session()
+
+    news = db_sess.query(Book).filter(Book.id == id,
+                                      Book.user == current_user
+                                      ).first()
+
+    if news:
+        db_sess.delete(news)
+        db_sess.commit()
+
+    else:
+        abort(404)
+    return redirect('/book')
+
+
+@app.route('/games', methods=['GET', 'POST'])
+def add_game():
+    form = NewsForm()
+
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        news = Game()
+        news.content = form.content.data
+        print(1)
+        news.is_private = form.is_private.data
+        current_user.games.append(news)
+        print(2)
+        db_sess.merge(current_user)
+        db_sess.commit()
+        print(2)
+        return redirect('/game')
+
+    db_sess = db_session.create_session()
+
+    if current_user.is_authenticated:
+        news = db_sess.query(Game).filter(
+            (Game.user == current_user) | (Game.is_private != True))
+
+    else:
+        news = db_sess.query(Game).filter(Game.is_private != True)
+    print(3)
+    return render_template('news.html',
+                           form=form,
+                           news=news)
+
+
+@app.route('/game/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_game(id):
+    form = NewsForm()
+
+    if request.method == "GET":
+        db_sess = db_session.create_session()
+        news = db_sess.query(Game).filter(Game.id == id,
+                                          Game.user == current_user
+                                          ).first()
+
+        if news:
+            form.content.data = news.content
+            form.is_private.data = news.is_private
+
+        else:
+            abort(404)
+
+    if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        news = db_sess.query(Game).filter(Game.id == id,
+                                          Game.user == current_user
+                                          ).first()
+
+        if news:
+            news.content = form.content.data
+            news.is_private = form.is_private.data
+            db_sess.commit()
+            return redirect('/game')
+
+        else:
+            abort(404)
+
+    return render_template('news.html',
+                           title='Редактирование новости',
+                           form=form
+                           )
+
+
+@app.route('/game_delete/<int:id>', methods=['GET', 'POST'])
+@login_required
+def game_delete(id):
+    db_sess = db_session.create_session()
+
+    news = db_sess.query(Game).filter(Game.id == id,
+                                      Game.user == current_user
+                                      ).first()
+
+    if news:
+        db_sess.delete(news)
+        db_sess.commit()
+
+    else:
+        abort(404)
+    return redirect('/game')
+
+
+@app.route('/map', methods=['GET', 'POST'])
+@login_required
+def map_random():
+    step_one, step_two = 'https://static-maps.yandex.ru/1.x/?ll=','&spn=0.016457,0.00000&l=sat'
+    cord_x, cord_y = str(random.choice(range(-70000000, 70000000)) / 1000000),\
+          str(random.choice(range(-60000000, 70000000)) / 1000000)
+    ssulka = step_one + cord_x + ',' + cord_y + step_two
+    response = requests.get(ssulka)
+    print(response, type(response))
+    return redirect(ssulka)
 
 
 if __name__ == '__main__':
