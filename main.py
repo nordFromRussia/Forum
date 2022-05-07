@@ -512,7 +512,7 @@ def game_delete(id):
 @app.route('/map', methods=['GET', 'POST'])
 @login_required
 def map_random():
-    step_one, step_two = 'https://static-maps.yandex.ru/1.x/?ll=','&spn=0.016457,0.00000&l=sat'
+    step_one, step_two = 'https://static-maps.yandex.ru/1.x/?ll=','&spn=0.016457,0.10000&l=sat'
     cord_x, cord_y = str(random.choice(range(-70000000, 70000000)) / 1000000),\
           str(random.choice(range(-60000000, 70000000)) / 1000000)
     ssulka = step_one + cord_x + ',' + cord_y + step_two
